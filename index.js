@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const app = express()
 require('dotenv').config()
 const { MongoClient, ServerApiVersion } = require('mongodb');
@@ -21,8 +22,7 @@ async function run() {
 
         const ServicesCollection = client.db("doctor-portal").collection("services");
         const BookingCollection = client.db("doctor-portal").collection("Booking");
-        // const BookingCollection = client.db("doctor-portal").collection("bookings");
-        // console.log(BookingCollection)
+        const userCollection = client.db("doctor-portal").collection("user");
 
         app.get('/service', async (req, res) => {
             const query = {}
@@ -89,7 +89,18 @@ async function run() {
             res.send(services);
         })
 
-
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email
+            const user = req.body
+            const filter = { email: email };
+            const option = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            }
+            const result = await userCollection.updateOne(filter, updateDoc, option)
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET)
+            res.send({ result,  token })
+        })
 
     } finally {
         // await client.close();
