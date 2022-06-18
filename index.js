@@ -3,7 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const app = express()
 require('dotenv').config()
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const { restart } = require('nodemon');
 const port = process.env.PORT || 5000
 
@@ -16,6 +16,21 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@clu
 // console.log(uri)
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: 'UnAuthorized access' });
+    }
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden access' })
+        }
+        req.decoded = decoded;
+        next();
+    });
+}
 async function run() {
     try {
         await client.connect();
@@ -30,6 +45,7 @@ async function run() {
             const result = await cursor.toArray()
             res.send(result)
         })
+
 
         app.post('/booking', async (req, res) => {
             const booking = req.body;
@@ -47,11 +63,43 @@ async function run() {
             return res.send({ success: true, result })
         })
 
-        app.get('/booking', async (req, res) => {
-            const userEmail = req.query.userEmail;
-            const query = { userEmail: userEmail };
-            const bookings = await BookingCollection.find(query).toArray();
-            res.send(bookings)
+        app.get('/booking', verifyJWT, async (req, res) => {
+            const patient = req.query?.patient;
+            const decodedEmail = req.decoded.email
+            if (patient == decodedEmail) {
+                const query = { patient: patient };
+                const bookings = await BookingCollection.find(query).toArray();
+                return res.send(bookings);
+            }
+            else {
+                return res.status(403).send({ message: "forbiden access" })
+            }
+
+        })
+
+        // app.put('/user/:email', async (req, res) => {
+        //     const email = req.params.email
+        //     const user = req.body
+        //     const filter = { email: email };
+        //     const option = { upsert: true };
+        //     const updateDoc = {
+        //         $set: user,
+        //     }
+        //     const result = await userCollection.updateOne(filter, updateDoc, option)
+        //     const token = jwt.sign({ email: email },process.env.ACCESS_TOKEN_SECRET , { expiresIn: '1h' })
+        //     res.send({result,token})
+        // })
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ result, token });
         })
 
         // app.post('/booking', async (req, res) => {
@@ -85,7 +133,6 @@ async function run() {
                 service.slots = available;
             });
 
-
             res.send(services);
         })
 
@@ -99,7 +146,19 @@ async function run() {
             }
             const result = await userCollection.updateOne(filter, updateDoc, option)
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET)
-            res.send({ result,  token })
+            res.send({ result, token })
+        })
+
+        // -------------------------
+
+        // delete order item
+        app.delete('/booking/:id', async (req, res) => {
+            const id = req.params.id
+            console.log(id)
+            const query = { _id: ObjectId(id) }
+            console.log(query)
+            const result = await BookingCollection.deleteOne(query)
+            res.send(result)
         })
 
     } finally {
