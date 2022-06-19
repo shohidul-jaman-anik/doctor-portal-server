@@ -77,37 +77,6 @@ async function run() {
 
         })
 
-        // app.put('/user/:email', async (req, res) => {
-        //     const email = req.params.email
-        //     const user = req.body
-        //     const filter = { email: email };
-        //     const option = { upsert: true };
-        //     const updateDoc = {
-        //         $set: user,
-        //     }
-        //     const result = await userCollection.updateOne(filter, updateDoc, option)
-        //     const token = jwt.sign({ email: email },process.env.ACCESS_TOKEN_SECRET , { expiresIn: '1h' })
-        //     res.send({result,token})
-        // })
-        app.put('/user/:email', async (req, res) => {
-            const email = req.params.email;
-            const user = req.body;
-            const filter = { email: email };
-            const options = { upsert: true };
-            const updateDoc = {
-                $set: user,
-            };
-            const result = await userCollection.updateOne(filter, updateDoc, options);
-            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
-            res.send({ result, token });
-        })
-
-        // app.post('/booking', async (req, res) => {
-        //     const booking = req.body;
-        //     console.log(booking)
-        //     const result = await BookingCollection.insertOne(booking);
-        //     return res.send(result)
-        // })
 
         // Warning: This is not the proper way to query multiple collection. 
         // After learning more about mongodb. use aggregate, lookup, pipeline, match, group
@@ -136,6 +105,13 @@ async function run() {
             res.send(services);
         })
 
+        // get all user
+        app.get('/allUsers', verifyJWT, async (req, res) => {
+            const users = await userCollection.find().toArray()
+            res.send(users)
+        })
+
+        // Save Registered user information in the database
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email
             const user = req.body
@@ -147,6 +123,24 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc, option)
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET)
             res.send({ result, token })
+        })
+
+        // Make a admin
+        app.put('/user/admin/:email',verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        })
+        // Delete User
+        app.delete('/user/:id', async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: ObjectId(id) }
+            const result = await userCollection.deleteOne(filter)
+            res.send(result)
         })
 
         // -------------------------
