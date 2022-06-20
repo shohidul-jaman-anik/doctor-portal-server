@@ -126,7 +126,7 @@ async function run() {
         })
 
         // Make a admin
-        app.put('/user/admin/:email',verifyJWT, async (req, res) => {
+        app.put('/user/admin/:email', async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
             const updateDoc = {
@@ -135,6 +135,8 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc);
             res.send(result);
         })
+
+
         // Delete User
         app.delete('/user/:id', async (req, res) => {
             const id = req.params.id
@@ -142,6 +144,15 @@ async function run() {
             const result = await userCollection.deleteOne(filter)
             res.send(result)
         })
+
+        // get all admin
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email
+            const user = await userCollection.findOne({ email: email })
+            const isAdmin = user.role === "admin"
+            res.send({ admin: isAdmin })
+        })
+
 
         // -------------------------
 
