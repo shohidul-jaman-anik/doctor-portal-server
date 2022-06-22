@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const app = express()
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { restart } = require('nodemon');
 const port = process.env.PORT || 5000
 
@@ -77,6 +78,14 @@ async function run() {
 
         })
 
+        // find a particular booking for payment
+        app.get('/booking/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const booking = await BookingCollection.findOne(query)
+            res.send(booking)
+        })
+
 
         // Warning: This is not the proper way to query multiple collection. 
         // After learning more about mongodb. use aggregate, lookup, pipeline, match, group
@@ -111,7 +120,8 @@ async function run() {
             res.send(users)
         })
 
-        // Save Registered user information in the database
+
+        // Save Registered user information store in the database
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email
             const user = req.body
@@ -136,7 +146,6 @@ async function run() {
             res.send(result);
         })
 
-
         // Delete User
         app.delete('/user/:id', async (req, res) => {
             const id = req.params.id
@@ -145,16 +154,13 @@ async function run() {
             res.send(result)
         })
 
-        // get all admin
+        // get all admin for  protected route
         app.get('/admin/:email', async (req, res) => {
             const email = req.params.email
             const user = await userCollection.findOne({ email: email })
             const isAdmin = user.role === "admin"
             res.send({ admin: isAdmin })
         })
-
-
-        // -------------------------
 
         // delete order item
         app.delete('/booking/:id', async (req, res) => {
@@ -165,6 +171,27 @@ async function run() {
             const result = await BookingCollection.deleteOne(query)
             res.send(result)
         })
+
+        // -------------------------
+        //          Payment 
+        //---------------------------- 
+
+        app.post("/create-payment-intent",verifyJWT, async (req, res) => {
+            const service = req.body;
+            const price = service.price
+            const amount = price * 100
+
+            // Create a PaymentIntent with the order amount and currency
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                payment_method_types: ['card'],
+            });
+
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
 
     } finally {
         // await client.close();
