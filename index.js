@@ -39,6 +39,7 @@ async function run() {
         const ServicesCollection = client.db("doctor-portal").collection("services");
         const BookingCollection = client.db("doctor-portal").collection("Booking");
         const userCollection = client.db("doctor-portal").collection("user");
+        const ReviewCollection = client.db("doctor-portal").collection("reviews");
 
         // get all services from database
         app.get('/service', async (req, res) => {
@@ -172,6 +173,25 @@ async function run() {
             const result = await BookingCollection.deleteOne(query)
             res.send(result)
         })
+
+        // -------------------------
+        //  Review 
+        //---------------------------- 
+
+        // post  review
+        app.post('/review', async (req, res) => {
+            const review = req.body
+            const result = await ReviewCollection.insertOne(review)
+            res.send(result)
+        })
+        // get all reviews
+        app.get('/reviews', async (req, res) => {
+            const query = {}
+            const cursor = ReviewCollection.find(query)
+            const result = await cursor.toArray()
+            res.send(result)
+        })
+
 
         // -------------------------
         //  Payment 
