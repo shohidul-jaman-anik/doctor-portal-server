@@ -40,6 +40,7 @@ async function run() {
         const BookingCollection = client.db("doctor-portal").collection("Booking");
         const userCollection = client.db("doctor-portal").collection("user");
 
+        // get all services from database
         app.get('/service', async (req, res) => {
             const query = {}
             const cursor = ServicesCollection.find(query)
@@ -47,7 +48,7 @@ async function run() {
             res.send(result)
         })
 
-
+        // Post database  booking information
         app.post('/booking', async (req, res) => {
             const booking = req.body;
             const query = {
@@ -173,10 +174,10 @@ async function run() {
         })
 
         // -------------------------
-        //          Payment 
+        //  Payment 
         //---------------------------- 
 
-        app.post("/create-payment-intent",verifyJWT, async (req, res) => {
+        app.post("/create-payment-intent", verifyJWT, async (req, res) => {
             const service = req.body;
             const price = service.price
             const amount = price * 100
