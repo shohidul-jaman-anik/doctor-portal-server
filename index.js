@@ -46,7 +46,7 @@ async function run() {
         // get all services from database
         app.get('/service', async (req, res) => {
             const query = {}
-            const cursor = ServicesCollection.find(query)
+            const cursor = ServicesCollection.find(query).project({name:1})
             const result = await cursor.toArray()
             res.send(result)
         })
