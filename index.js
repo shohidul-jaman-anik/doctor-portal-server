@@ -198,6 +198,12 @@ async function run() {
         //  Doctor
         //---------------------------- 
 
+        app.post('/doctors',verifyJWT, async (req, res) => {
+            const doctor = req.body
+            const result = await DoctorCollection.insertOne(doctor)
+            res.send(result)
+        })
+
 
 
 
