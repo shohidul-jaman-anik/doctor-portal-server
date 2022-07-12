@@ -8,6 +8,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { restart } = require('nodemon');
 const port = process.env.PORT || 5000
 
+
 // middlewhare
 app.use(cors())
 app.use(express.json())
@@ -182,9 +183,7 @@ async function run() {
         // delete order item
         app.delete('/booking/:id', async (req, res) => {
             const id = req.params.id
-            console.log(id)
             const query = { _id: ObjectId(id) }
-            console.log(query)
             const result = await BookingCollection.deleteOne(query)
             res.send(result)
         })
@@ -199,6 +198,7 @@ async function run() {
             const result = await ReviewCollection.insertOne(review)
             res.send(result)
         })
+
         // get all reviews
         app.get('/reviews', async (req, res) => {
             const query = {}
