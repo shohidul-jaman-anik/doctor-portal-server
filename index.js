@@ -35,7 +35,7 @@ function verifyJWT(req, res, next) {
 }
 async function run() {
     try {
-        await client.connect();
+        client.connect();
 
         const ServicesCollection = client.db("doctor-portal").collection("services");
         const BookingCollection = client.db("doctor-portal").collection("Booking");
