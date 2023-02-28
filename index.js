@@ -35,7 +35,7 @@ function verifyJWT(req, res, next) {
 }
 async function run() {
     try {
-       await client.connect();
+        client.connect();
 
         const ServicesCollection = client.db("doctor-portal").collection("services");
         const BookingCollection = client.db("doctor-portal").collection("Booking");
@@ -153,7 +153,7 @@ async function run() {
         })
 
         // Make a admin
-        app.put('/user/admin/:email', verifyJWT,  async (req, res) => {
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             console.log(email)
             const filter = { email: email };
@@ -226,7 +226,7 @@ async function run() {
         })
 
         // Delete doctor
-        app.delete('/doctor/:email', verifyJWT,  async (req, res) => {
+        app.delete('/doctor/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
             const result = await DoctorCollection.deleteOne(filter);
